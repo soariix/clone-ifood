@@ -1,0 +1,145 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders    Order[]
+  addresses Address[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String       @id @default(cuid())
+  name        String
+  icon        String
+  slug        String       @unique
+  restaurants Restaurant[]
+
+  @@map("categories")
+}
+
+model Restaurant {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  logo         String
+  coverImage   String
+  description  String?
+  rating       Float    @default(0)
+  reviewCount  Int      @default(0)
+  deliveryTime Int      // minutos
+  deliveryFee  Float
+  minOrder     Float
+  isOpen       Boolean  @default(true)
+  categoryId   String
+
+  category     Category   @relation(fields: [categoryId], references: [id])
+  menuItems    MenuItem[]
+  orders       Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("restaurants")
+}
+
+model MenuItem {
+  id           String  @id @default(cuid())
+  name         String
+  description  String
+  price        Float
+  image        String
+  sectionTitle String
+  isAvailable  Boolean @default(true)
+  calories     Int?
+  restaurantId String
+
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
+  orderItems   OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("menu_items")
+}
+
+model Address {
+  id           String  @id @default(cuid())
+  label        String
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String
+  userId       String
+
+  user   User    @relation(fields: [userId], references: [id])
+  orders Order[]
+
+  createdAt DateTime @default(now())
+
+  @@map("addresses")
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  status       OrderStatus @default(pending)
+  total        Float
+  deliveryFee  Float
+  userId       String
+  restaurantId String
+  addressId    String
+
+  user       User       @relation(fields: [userId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  address    Address    @relation(fields: [addressId], references: [id])
+  items      OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  quantity   Int
+  unitPrice  Float
+  notes      String?
+  orderId    String
+  menuItemId String
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("order_items")
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  preparing
+  on_the_way
+  delivered
+  cancelled
+}
