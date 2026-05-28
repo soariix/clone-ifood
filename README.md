@@ -93,6 +93,7 @@ clone-ifood/
 │   ├── (auth)/            # Login, cadastro
 │   ├── (tabs)/            # Início, Busca, Pedidos, Perfil
 │   ├── restaurant/[id].tsx
+│   ├── reorder/[id].tsx   # Pedir novamente (ajuste de quantidades → checkout)
 │   ├── checkout.tsx
 │   └── _layout.tsx
 ├── components/            # Componentes reutilizáveis
