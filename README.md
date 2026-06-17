@@ -6,11 +6,11 @@ Clone do iFood com **React Native (Expo)** no frontend e **Node.js + Express + P
 
 ## Stack
 
-| Camada     | Tecnologias                                                  |
-|------------|--------------------------------------------------------------|
-| Mobile     | Expo SDK 56, Expo Router, TypeScript, React Query, Zustand   |
-| UI         | Animated API, @gorhom/bottom-sheet, expo-secure-store        |
-| Backend    | Node.js, Express, Prisma ORM, PostgreSQL, JWT, Zod           |
+| Camada  | Tecnologias                                                |
+|---------|------------------------------------------------------------|
+| Mobile  | Expo SDK 56, Expo Router, TypeScript, React Query, Zustand |
+| UI      | Animated API, @gorhom/bottom-sheet, expo-secure-store      |
+| Backend | Node.js, Express, Prisma ORM, PostgreSQL, JWT, Zod         |
 
 ---
 
@@ -23,13 +23,6 @@ Clone do iFood com **React Native (Expo)** no frontend e **Node.js + Express + P
 ---
 
 ## Configuração rápida
-
-### Pré-requisitos
-
-- Node.js 18+
-- PostgreSQL rodando localmente
-- Expo Go instalado no celular
-- ngrok com conta gratuita configurada (`npx expo install @expo/ngrok` + `ngrok authtoken SEU_TOKEN`)
 
 ### 1. Instale as dependências
 
@@ -119,79 +112,80 @@ clone-ifood/
 
 ## Rotas da API
 
-| Método | Rota                          | Auth | Descrição                    |
-|--------|-------------------------------|------|------------------------------|
-| POST   | `/auth/login`                 | —    | Login                        |
-| POST   | `/auth/register`              | —    | Cadastro                     |
-| GET    | `/auth/me`                    | ✅   | Perfil do usuário logado     |
-| GET    | `/restaurants`                | —    | Lista (filtros: category, minRating, page) |
-| GET    | `/restaurants/search?q=`      | —    | Busca por nome/categoria     |
-| GET    | `/restaurants/:id`            | —    | Detalhe do restaurante       |
-| GET    | `/restaurants/:id/menu`       | —    | Menu em seções               |
-| GET    | `/categories`                 | —    | Lista de categorias          |
-| POST   | `/orders`                     | ✅   | Criar pedido                 |
-| GET    | `/orders`                     | ✅   | Meus pedidos                 |
-| GET    | `/orders/:id`                 | ✅   | Detalhe de um pedido         |
+| Método | Rota                           | Auth | Descrição                              |
+|--------|--------------------------------|------|----------------------------------------|
+| POST   | `/auth/login`                  | —    | Login                                  |
+| POST   | `/auth/register`               | —    | Cadastro                               |
+| GET    | `/auth/me`                     | ✅   | Perfil do usuário logado               |
+| GET    | `/restaurants`                 | —    | Lista (filtros: category, minRating, page) |
+| GET    | `/restaurants/search?q=`       | —    | Busca por nome/categoria               |
+| GET    | `/restaurants/:id`             | —    | Detalhe do restaurante                 |
+| GET    | `/restaurants/:id/menu`        | —    | Menu em seções                         |
+| GET    | `/categories`                  | —    | Lista de categorias                    |
+| POST   | `/orders`                      | ✅   | Criar pedido                           |
+| GET    | `/orders`                      | ✅   | Meus pedidos                           |
+| GET    | `/orders/:id`                  | ✅   | Detalhe de um pedido                   |
 
 ---
 
-## 🤖 AI-Assisted Development
+## QA Automation
 
-This project's mobile QA automation framework — covering test infrastructure, page objects, test cases, and CI/CD pipeline — was built with significant assistance from AI coding tools. Below is a transparent account of what each tool contributed and the measurable impact on delivery speed.
+O projeto inclui um framework de testes mobile com **Pytest + Appium 2.x + UiAutomator2**, cobrindo testes de fumaça (smoke tests) e pipeline de CI/CD automatizado.
 
-### Tools used
+### Stack de testes
 
-#### GitHub Copilot Chat (VS Code)
+| Camada   | Tecnologias                                              |
+|----------|----------------------------------------------------------|
+| Testes   | Python 3.11, Pytest, Appium 2.x, UiAutomator2           |
+| Padrão   | Page Object Model (POM)                                  |
+| Reports  | Allure Report                                            |
+| CI/CD    | GitHub Actions + Android Emulator (API 33)              |
 
-Used for **generating the core test infrastructure from scratch**.
+### Estrutura de testes
 
-**What it produced:**
+```
+tests/
+├── conftest.py          # Fixtures: driver (Appium), api_client (JWT auth)
+├── pages/
+│   ├── base_page.py     # Métodos base com WebDriverWait
+│   └── login_page.py    # Page Object da tela de login
+└── smoke/
+    └── test_login.py    # 4 casos: login válido, senha errada,
+                         # e-mail inválido, campos vazios
+```
 
-- **`tests/conftest.py`** — Full Appium 2.x session fixture using `UiAutomator2Options`, `python-dotenv` environment loading, the `api_client` fixture with JWT authentication against the Express backend, and the `pytest_runtest_makereport` hook for automatic failure screenshots saved to `reports/screenshots/`.
-- **`tests/pages/base_page.py`** and **`tests/pages/login_page.py`** — Page Object Model classes with `WebDriverWait`-backed element interactions, `AppiumBy.ACCESSIBILITY_ID` locators, and a clean `login(email, password)` composition method.
-- **`tests/smoke/test_login.py`** — Four smoke test cases (`valid login`, `wrong password`, `invalid email`, `empty fields`) with `@pytest.mark.parametrize` for input validation coverage, `@allure.title`/`@allure.description` decorators, and `allure.step` context managers throughout.
+### Rodando os testes localmente
 
-**Concrete prompt example:**
+```bash
+# Instale as dependências Python
+pip install -r tests/requirements.txt
 
-> *"Create conftest.py for PyTest + Appium 2.x + UiAutomator2 testing an iFood Clone React Native APK. Include a `driver` fixture with `scope=function`, UiAutomator2 capabilities reading `APK_PATH` from environment, an `api_client` fixture that POSTs to `/auth/login` and returns the JWT, and a `pytest_runtest_makereport` hook that screenshots on failure."*
+# Configure o .env com APK_PATH, APPIUM_HOST, API_BASE_URL
+cp .env.example .env
 
-The model generated a production-ready file on the first attempt, correctly inferring the `tokens.accessToken` response structure by cross-referencing the backend controller shown in context.
+# Suba o Appium
+appium
+
+# Em outro terminal, rode os testes
+pytest tests/smoke/ -m smoke --alluredir=reports/allure-results
+
+# Gere o report
+allure serve reports/allure-results
+```
+
+### Pipeline CI/CD
+
+O arquivo `.github/workflows/mobile-tests.yml` executa automaticamente a cada PR e diariamente às 06:00 BRT:
+
+1. Sobe o PostgreSQL como service container
+2. Roda `prisma migrate deploy` + `prisma db seed`
+3. Sobe o backend Node.js
+4. Inicia o Android Emulator (API 33, x86_64)
+5. Executa os smoke tests com Pytest
+6. Publica o Allure Report no GitHub Pages
 
 ---
 
-#### Claude (via GitHub Copilot Chat / Claude Sonnet 4.6)
+## Licença
 
-Used for **infrastructure-level generation requiring multi-file reasoning**.
-
-**What it produced:**
-
-- **`.github/workflows/mobile-tests.yml`** — Complete GitHub Actions pipeline: PostgreSQL service container, Node.js backend build + `prisma migrate deploy` + `prisma db seed` + health-check loop, Python 3.11 + pip, Appium 2 server, `reactivecircus/android-emulator-runner@v2` (API 33, `google_apis`, `x86_64`), `pytest -m smoke --alluredir`, Allure report deployment to GitHub Pages via `simple-elf/allure-report-action` + `peaceiris/actions-gh-pages`.
-- **Locator audit** — Reviewed all `AppiumBy` strategies across page objects and flagged XPath fragility, recommending `ACCESSIBILITY_ID`-first with `ANDROID_UI_AUTOMATOR` as fallback for dynamic lists.
-
-**Concrete prompt example:**
-
-> *"Create `.github/workflows/mobile-tests.yml`. PR trigger + daily cron at 06:00 BRT. PostgreSQL 15 service, Node 18 backend (npm ci, prisma migrate deploy, db seed, npm start), Python 3.11, Appium 2 + UiAutomator2, android-emulator-runner API 33, pytest smoke tests, Allure to GitHub Pages. Use secrets for DATABASE_URL and JWT_SECRET."*
-
-The model correctly derived that `npm start` requires a prior `npm run build` step (TypeScript project), and added the health-check polling loop independently — details not specified in the prompt.
-
----
-
-### Productivity impact
-
-| Artifact | Manual estimate | Actual time | AI contribution |
-|---|---|---|---|
-| `conftest.py` (fixtures + hook) | ~3 h | ~25 min | Copilot generated full file; manual review + `.env` wiring |
-| `BasePage` + `LoginPage` (POM) | ~1.5 h | ~15 min | Copilot generated; added `clear()` before `send_keys` |
-| `test_login.py` (4 test cases) | ~2 h | ~20 min | Copilot generated; adjusted `parametrize` IDs and assertions |
-| `mobile-tests.yml` (CI/CD) | ~4 h | ~30 min | Claude generated; verified `build` step ordering manually |
-| **Total** | **~10.5 h** | **~90 min** | **~85% reduction in boilerplate time** |
-
-The primary human effort shifted from *writing* to *reviewing*: validating that generated locators matched the actual app, confirming the API response schema against the backend source, and adjusting assertion messages for clarity.
-
----
-
-### Limitations observed
-
-- Both tools occasionally hallucinated Appium capability key names (e.g., `appPackage` vs `app` for full APK installs). Always cross-check against the [Appium UiAutomator2 driver docs](https://github.com/appium/appium-uiautomator2-driver).
-- Generated `WebDriverWait` timeouts were conservative (10 s everywhere). Real-device testing on slower CI runners may require tuning per element.
-- Neither tool verified that `accessibility_id` values (`"email-input"`, `"login-button"`, etc.) actually exist in the React Native component tree — that mapping must be done manually via `adb` or Appium Inspector.
+MIT
